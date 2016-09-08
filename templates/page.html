@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block controls %}
+  {% if user %}
+	<a class="control-link" href="/_edit{{path}}">edit</a>
+	|
+  {% endif %}
+  <a class="control-link" href="/_history{{path}}">history</a>
+{% endblock %}
+
+{% block content %}
+  {{page.content | safe}}    
+{% endblock %}

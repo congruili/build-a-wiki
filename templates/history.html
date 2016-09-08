@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block controls %}
+  {% if user %}
+  <a class="control-link" href="/_edit{{path}}">edit</a>
+  |
+  {% endif %}
+  <a class="control-link" href="{{path}}">view</a>
+{% endblock %}
+
+{% block content %}
+  <table class="history-table">
+  {% for p in pages %} 
+    <tr>
+      <td class="date-cell">
+        {{ (p.created-timedelta).strftime("%c") }}
+      </td>
+
+      <td class="content-cell">
+        {{ p.content[:100] }}
+      </td>
+
+      <td class="link-cell">
+        <a href="{{path}}?v={{p.key().id()}}">view</a>
+      </td>
+
+      {% if user %}
+      <td class="link-cell">
+        <a href="/_edit{{path}}?v={{p.key().id()}}">edit</a>
+      </td>
+      {% endif %}
+    </tr>
+  {% endfor %}
+  </table>
+{% endblock %}

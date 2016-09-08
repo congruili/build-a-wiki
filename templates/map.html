@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block controls %}
+  <a class="control-link" href="/">mainpage</a>
+{% endblock %}
+
+{% block content %}
+  {% if img_url %}
+    <img src="{{img_url}}">
+  {% endif %}
+{% endblock %}
