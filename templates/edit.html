@@ -1,18 +1,24 @@
 {% extends "base.html" %}
 
 {% block controls %}
-  {% if page %}
-	  <a class="control-link" href="{{path}}">view</a>
-	  |  
-	  <a class="control-link" href="/_history{{path}}">history</a>
-  {% endif %}
+  <div class="controls">
+    {% if page %}
+	    <a class="control-link" href="{{path}}">view</a>
+	    |  
+	    <a class="control-link" href="/_history{{path}}">history</a>
+    {% endif %}
+  </div>
+
+  <div class="controls">
+    <a class="control-link" href="/_map">map</a>
+  </div>
 {% endblock %}
 
 {% block content %}
   <form class="main-edit" method="post">
-    <textarea name="content">{{content}}</textarea>
-    <div class="error">{{error}}</div>
+    <textarea name="content">{{content}}</textarea>    
     <div class="form-footer">
+      <div class="error">{{error}}</div>
       <button type="submit">Save</button>
     </div>
   </form>

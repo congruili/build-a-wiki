@@ -1,10 +1,16 @@
 {% extends "base.html" %}
 {% block controls %}
-  {% if user %}
-	<a class="control-link" href="/_edit{{path}}">edit</a>
-	|
-  {% endif %}
-  <a class="control-link" href="/_history{{path}}">history</a>
+  <div class="controls">
+	{% if user %}
+	  <a class="control-link" href="/_edit{{path}}">edit</a>
+	  |
+	{% endif %}
+	<a class="control-link" href="/_history{{path}}">history</a>
+  </div>
+
+  <div class="controls">
+    <a class="control-link" href="/_map">map</a>
+  </div>
 {% endblock %}
 
 {% block content %}

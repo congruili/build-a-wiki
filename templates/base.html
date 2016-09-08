@@ -9,8 +9,6 @@
 <body>
   <div class="header">
     <div class="controls">
-      <a class="control-link" href="/_map">map</a>
-
       {% if user %}
         {{user.name}} (<a class="control-link" href="/logout">logout</a>)
       {% else %}
@@ -20,10 +18,8 @@
       {% endif %}
     </div>
 
-    <div class="controls">
-      {% block controls %}
-      {% endblock %}
-    </div>
+    {% block controls %}
+    {% endblock %}  
 
     <div class="clear"></div>
   </div>

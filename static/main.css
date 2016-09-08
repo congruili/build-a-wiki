@@ -1,0 +1,95 @@
+html {
+	height: 100%;
+}
+
+body {
+	position: relative;
+	height: 100%;
+
+    font-family: Helvetica, Arial, sans-serif;
+    font-size: 15px;
+
+    width: 800px;
+    margin: 0 auto;
+    color: #333;
+}
+
+.header {
+	height: 30px;
+	line-height: 30px;
+
+	margin-bottom: 10px;
+}
+
+.controls {
+	float: right;
+	font-size: 14px;
+	color: gray;
+}
+
+.controls + .controls {
+	margin-right: 20px;
+}
+
+.control-link {
+	color: #008B8B;
+	text-decoration: none;
+}
+
+.control-link:visited {
+	color: #008B8B;
+}
+
+.control-link:hover {
+	color: #8B4513;	
+	text-decoration: underline;
+}
+
+.error {
+	color: red;
+}
+
+.main-edit {
+	position: absolute;
+	top: 45px;
+	bottom: 10px;
+	left: 0;
+	right: 0;	
+}
+
+.main-edit textarea {
+	position: absolute;
+	top: 0;
+	bottom: 50px;
+	left: 0;
+	right: 0;
+	font-size: 15px;
+}
+
+.form-footer {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;	
+	height: 50px;
+}
+
+.main-edit button {
+	font-size: 18px;
+}
+
+.history-table {
+	border-collapse: collapse;
+}
+
+.history-table .date-cell {
+	width: 200px;
+}
+
+.history-table .content-cell {
+	padding: 10px;
+}
+
+.history-table .link-cell {
+	padding: 0 5px;
+}
