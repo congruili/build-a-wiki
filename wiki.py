@@ -254,7 +254,7 @@ class EditPage(WikiHandler):
 		if p:
 			content = p.content
 
-		self.render("edit.html", content = content, path = path)
+		self.render("edit.html", content = content, path = path, page=p)
 
 	def post(self, path):
 		if not self.user:
@@ -265,7 +265,7 @@ class EditPage(WikiHandler):
 		old_page = Page.by_path(path).get()		
 
 		if not content:
-			error = "content, please!"
+			error = "Content, please!"
 			content = ""
 			self.render("edit.html", content = content, path = path, error = error)
 			return
