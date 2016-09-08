@@ -5,7 +5,7 @@ https://www.youtube.com/watch?v=bdes6p2h_YU
 
 https://www.youtube.com/watch?v=bWnxTIT0vd8
 
-####Additional features:
+**Additional features:**
 `/_map` shows the locations of the users who made the most recent 100 changes to the contents of the wiki) on a map.
 
 `/_history[PAGE_RE].json` shows the detailed info of all the history versions of `[PAGE_RE]` (including subject, which is `[PAGE_RE]`, content, and the time it was created) in a json file if `[PAGE_RE]` already exists; if `[PAGE_RE]` does not exist, just return an empty json. (`[PAGE_RE]` is the name of the subject page.)
