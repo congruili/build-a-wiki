@@ -4,6 +4,7 @@ import random
 import hashlib
 import hmac
 import urllib2
+import json
 from string import letters
 from datetime import timedelta, datetime
 
@@ -40,6 +41,11 @@ class WikiHandler(webapp2.RequestHandler):
 
     def render(self, template, **kw):
         self.write(self.render_str(template, **kw))
+
+    def render_json(self, d):
+        json_txt = json.dumps(d)
+        self.response.headers['Content-Type'] = 'application/json; charset=UTF-8'
+        self.write(json_txt)
 
     def set_secure_cookie(self, name, val):
         cookie_val = make_secure_val(val)
@@ -128,7 +134,13 @@ class Page(db.Model):
 
     @classmethod
     def by_id(cls, page_id):
-    	return cls.get_by_id(page_id)
+        return cls.get_by_id(page_id)
+
+    def as_dict(self):
+        d = {'subject': self.path,
+             'content': self.content,
+             'created': (self.created - timedelta(hours=4)).strftime('%c')}
+        return d
 
 
 USER_RE = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")
@@ -278,9 +290,19 @@ class HistoryPage(WikiHandler):
 		else:
 			self.redirect('/_edit' + path)
 
+
+class JsonPage(WikiHandler):
+    def get(self, path):
+        self.format = 'json'
+        q = Page.by_path(path)
+        q.fetch(limit=100)
+        pages = list(q)
+        return self.render_json([p.as_dict() for p in pages])        
+
+
 IP_URL = 'http://ip-api.com/csv/'
 def get_coords(ip):
-	ip = '4.2.2.2'
+	# ip = '4.2.2.2'
 	url = IP_URL + ip
 	content = None
 	try:
@@ -339,9 +361,10 @@ app = webapp2.WSGIApplication([('/signup', Signup),
                                ('/login', Login),
                                ('/logout', Logout),
                                ('/_map', Map),                                
-                               #('(/.*/+)', NoSlash), 
-                               ('/_edit' + PAGE_RE, EditPage),
+                               #('(/.*/+)', NoSlash),                                
+                               ('/_history' + PAGE_RE + '.json', JsonPage),
                                ('/_history' + PAGE_RE, HistoryPage),
+                               ('/_edit' + PAGE_RE, EditPage),
                                (PAGE_RE, WikiPage),
                                ],
                               debug=True)
