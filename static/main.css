@@ -93,3 +93,11 @@ body {
 .history-table .link-cell {
 	padding: 0 5px;
 }
+
+.age {
+	position: absolute;
+	bottom: 5px;
+	right: 0px;
+	color: #008B8B;
+	font-size: 15px;
+}

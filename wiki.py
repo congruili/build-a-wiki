@@ -5,12 +5,14 @@ import hashlib
 import hmac
 import urllib2
 import json
+import time
 from string import letters
 from datetime import timedelta, datetime
 
 import webapp2
 import jinja2
 
+from google.appengine.api import memcache
 from google.appengine.ext import db
 
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
@@ -128,9 +130,14 @@ class Page(db.Model):
     #last_modified = db.DateTimeProperty(auto_now = True)
 
     @classmethod
-    def by_path(cls, path):
-        p = Page.all().filter('path =', path).order('-created')
-        return p
+    def by_path(cls, path, update = False):
+        pages, age = age_get(path)
+        if update or pages is None:
+            q = Page.all().filter('path =', path).order('-created').fetch(limit=100)
+            pages = list(q)
+            age_set(path, pages)
+
+        return pages, age
 
     @classmethod
     def by_id(cls, page_id):
@@ -228,65 +235,103 @@ class NoSlash(WikiHandler):
 
 
 class EditPage(WikiHandler):
-	def get(self, path):
-		if not self.user:
-			self.redirect('/login')
+    def get(self, path):
+        if not self.user:
+            self.redirect('/login')
 
-		if path in ['/signup', '/login', '/logout']:
-			self.redirect(path)
+        if path in ['/signup', '/login', '/logout']:
+            self.redirect(path)
 
-		if re.match(r'/_edit(.*)', path) or re.match(r'/_history(.*)', path) or re.match(r'/_map(.*)', path):			
-			return self.notfound(message='Sorry, invalid path.')
+        if re.match(r'/_edit(.*)', path) or re.match(r'/_history(.*)', path) or re.match(r'/_map(.*)', path):			
+            return self.notfound(message='Sorry, invalid path.')
 
-		v = self.request.get('v')
-		p = None
-		if v:
-			if v.isdigit():
-				p = Page.by_id(int(v))
+        v = self.request.get('v')
+        p = None
+        if v:
+            if v.isdigit():
+                p = Page.by_id(int(v))
 
-			if not p:
-				return self.notfound()
+            if not p:
+                return self.notfound()
 
-		else:
-			p = Page.by_path(path).get()
+        else:
+            pages, age = Page.by_path(path)
+            if pages:
+                p = pages[0]
 
-		content = ""
-		if p:
-			content = p.content
+        content = ""
+        if p:
+            content = p.content
 
-		self.render("edit.html", content = content, path = path, page=p)
+        self.render("edit.html", content = content, path = path, page=p)
 
-	def post(self, path):
-		if not self.user:
-			self.error(400)
-			return
+    def post(self, path):
+        if not self.user:
+            self.error(400)
+            return
 
-		content = self.request.get('content')
-		old_page = Page.by_path(path).get()		
+        content = self.request.get('content')
+        pages, age = Page.by_path(path)
+        old_page = None
+        if pages:
+            old_page = pages[0]	
 
-		if not content:
-			error = "Content, please!"
-			content = ""
-			self.render("edit.html", content = content, path = path, error = error)
-			return
-		elif not old_page or old_page.content != content:
+        if not content:
+            error = "Content, please!"
+            content = ""
+            self.render("edit.html", content = content, path = path, error = error)
+            return
+        elif not old_page or old_page.content != content:
 
-			p = Page(content = content, path = path)
-			coords = get_coords(self.request.remote_addr)
-			if coords:
-				p.coords = coords
-			p.put()
+            p = Page(content = content, path = path)
+            coords = get_coords(self.request.remote_addr)
+            if coords:
+                p.coords = coords
+            p.put()
+            time.sleep(0.1)
+            if coords:
+                get_pages(update = True)
+            Page.by_path(path, update = True)
 
-		self.redirect(path)		
+        self.redirect(path)	
+
+
+def age_set(key, val):
+    save_time = datetime.utcnow()
+    memcache.set(key, (val, save_time))
+
+def age_get(key):
+    r = memcache.get(key)
+    if r:
+        val, save_time = r
+        age = (datetime.utcnow() - save_time).total_seconds()
+    else:
+        val, age = None, 0
+    return val, age
+
+def get_pages(update = False):
+    mc_key = 'PAGES'
+    pages, age = age_get(mc_key)
+    if update or pages is None:
+        q = Page.all().order('-created').fetch(limit=100)
+        pages = list(q)
+        age_set(mc_key, pages)
+    return pages, age
+
+def age_str(age):
+    s = 'queried %s seconds ago'
+    age = int(age)
+    if age == 0 or age == 1:
+        s = s.replace('seconds', 'second')
+    return s % age
+
 
 class HistoryPage(WikiHandler):
 	def get(self, path):
-		q = Page.by_path(path)
-		q.fetch(limit=100)
+		pages, age = Page.by_path(path)
 
-		pages = list(q)
 		if pages:
-			self.render("history.html", path = path, pages = pages, timedelta=timedelta(hours=4))
+			self.render("history.html", path = path, pages = pages, timedelta=timedelta(hours=4), age=age_str(age))
 		else:
 			self.redirect('/_edit' + path)
 
@@ -294,15 +339,13 @@ class HistoryPage(WikiHandler):
 class JsonPage(WikiHandler):
     def get(self, path):
         self.format = 'json'
-        q = Page.by_path(path)
-        q.fetch(limit=100)
-        pages = list(q)
+        pages, age = Page.by_path(path)
         return self.render_json([p.as_dict() for p in pages])        
 
 
 IP_URL = 'http://ip-api.com/csv/'
 def get_coords(ip):
-	# ip = '4.2.2.2'
+	#ip = '4.2.2.2'
 	url = IP_URL + ip
 	content = None
 	try:
@@ -323,17 +366,17 @@ def gmaps_img(points):
 	return GMAPS_URL + markers
 
 class Map(WikiHandler):
-	def get(self):
-		q = Page.all().order('-created').fetch(100)
-		pages = list(q)
+    def get(self):
+        pages = []
+        pages, age = get_pages()
 
-		points = filter(None, (p.coords for p in pages))
+        points = filter(None, (p.coords for p in pages))
 
-		img_url = GMAPS_URL
-		if points:
-			img_url = gmaps_img(points)
+        img_url = GMAPS_URL
+        if points:
+            img_url = gmaps_img(points)
 
-		self.render('map.html', img_url = img_url)
+        self.render('map.html', img_url = img_url, age=age_str(age))
 
 
 class WikiPage(WikiHandler):
@@ -349,18 +392,28 @@ class WikiPage(WikiHandler):
                 return self.notfound()
 
         else:
-            p = Page.by_path(path).get()
+            pages, age = Page.by_path(path)
+            if pages:
+                p = pages[0]
 
         if p:
             self.render("page.html", page = p, path = path)
         else:
         	self.redirect('/_edit' + path)
 
+
+class Flush(WikiHandler):
+    def get(self):
+        memcache.flush_all()
+        self.redirect('/')
+
+
 PAGE_RE = r'(/(?:[a-zA-Z0-9_-]+/?)*)'
 app = webapp2.WSGIApplication([('/signup', Signup),
                                ('/login', Login),
                                ('/logout', Logout),
-                               ('/_map', Map),                                
+                               ('/_map', Map), 
+                               ('/_flush', Flush),                              
                                #('(/.*/+)', NoSlash),                                
                                ('/_history' + PAGE_RE + '.json', JsonPage),
                                ('/_history' + PAGE_RE, HistoryPage),
