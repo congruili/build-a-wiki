@@ -71,8 +71,8 @@ class WikiHandler(webapp2.RequestHandler):
         self.user = uid and User.by_id(int(uid))
 
     def notfound(self, message='Sorry, my friend, but that page does not exist.'):
-    	self.error(404)
-    	self.write('<h1>404: Not Found</h1>%s' % message)
+        self.error(404)
+        self.write('<h1>404: Not Found</h1>%s' % message)
 
 ##### user stuff
 def make_salt(length = 5):
@@ -194,16 +194,16 @@ class Signup(WikiHandler):
         if have_error:
             self.render('signup-form.html', **params)
         else:
-	        u = User.by_name(self.username)
-	        if u:
-	            msg = 'That user already exists.'
-	            self.render('signup-form.html', error_username = msg)
-	        else:
-	            u = User.register(self.username, self.password, self.email)
-	            u.put()
+            u = User.by_name(self.username)
+            if u:
+                msg = 'That user already exists.'
+                self.render('signup-form.html', error_username = msg)
+            else:
+                u = User.register(self.username, self.password, self.email)
+                u.put()
 
-	            self.login(u)
-	            self.redirect('/')
+                self.login(u)
+                self.redirect('/')
 
 
 class Login(WikiHandler):
@@ -228,9 +228,9 @@ class Logout(WikiHandler):
         self.redirect('/')
 
 class NoSlash(WikiHandler):
-	def get(self, path):
-		new_path = path.rstrip('/') or '/'
-		self.redirect(new_path)
+    def get(self, path):
+        new_path = path.rstrip('/') or '/'
+        self.redirect(new_path)
 
 
 
@@ -242,7 +242,7 @@ class EditPage(WikiHandler):
         if path in ['/signup', '/login', '/logout']:
             self.redirect(path)
 
-        if re.match(r'/_edit(.*)', path) or re.match(r'/_history(.*)', path) or re.match(r'/_map(.*)', path):			
+        if re.match(r'/_edit(.*)', path) or re.match(r'/_history(.*)', path) or re.match(r'/_map(.*)', path):           
             return self.notfound(message='Sorry, invalid path.')
 
         v = self.request.get('v')
@@ -274,7 +274,7 @@ class EditPage(WikiHandler):
         pages, age = Page.by_path(path)
         old_page = None
         if pages:
-            old_page = pages[0]	
+            old_page = pages[0] 
 
         if not content:
             error = "Content, please!"
@@ -293,7 +293,7 @@ class EditPage(WikiHandler):
                 get_pages(update = True)
             Page.by_path(path, update = True)
 
-        self.redirect(path)	
+        self.redirect(path) 
 
 
 def age_set(key, val):
@@ -327,13 +327,13 @@ def age_str(age):
 
 
 class HistoryPage(WikiHandler):
-	def get(self, path):
-		pages, age = Page.by_path(path)
+    def get(self, path):
+        pages, age = Page.by_path(path)
 
-		if pages:
-			self.render("history.html", path = path, pages = pages, timedelta=timedelta(hours=4), age=age_str(age))
-		else:
-			self.redirect('/_edit' + path)
+        if pages:
+            self.render("history.html", path = path, pages = pages, timedelta=timedelta(hours=4), age=age_str(age))
+        else:
+            self.redirect('/_edit' + path)
 
 
 class JsonPage(WikiHandler):
@@ -345,25 +345,25 @@ class JsonPage(WikiHandler):
 
 IP_URL = 'http://ip-api.com/csv/'
 def get_coords(ip):
-	#ip = '4.2.2.2'
-	url = IP_URL + ip
-	content = None
-	try:
-		content = urllib2.urlopen(url).read()
-	except URLError:
-		return
+    #ip = '4.2.2.2'
+    url = IP_URL + ip
+    content = None
+    try:
+        content = urllib2.urlopen(url).read()
+    except URLError:
+        return
 
-	if content:
-		attr = content.split(',')
-		if attr[0] == 'success':
-			lat, lon = attr[7], attr[8]
-			return db.GeoPt(lat, lon)	
+    if content:
+        attr = content.split(',')
+        if attr[0] == 'success':
+            lat, lon = attr[7], attr[8]
+            return db.GeoPt(lat, lon)   
 
 
 GMAPS_URL = "http://maps.googleapis.com/maps/api/staticmap?size=380x263&sensor=false&"
 def gmaps_img(points):
-	markers = '&'.join('markers=%s,%s' % (p.lat, p.lon) for p in points)
-	return GMAPS_URL + markers
+    markers = '&'.join('markers=%s,%s' % (p.lat, p.lon) for p in points)
+    return GMAPS_URL + markers
 
 class Map(WikiHandler):
     def get(self):
@@ -399,7 +399,7 @@ class WikiPage(WikiHandler):
         if p:
             self.render("page.html", page = p, path = path)
         else:
-        	self.redirect('/_edit' + path)
+            self.redirect('/_edit' + path)
 
 
 class Flush(WikiHandler):
