@@ -11,6 +11,9 @@ https://www.youtube.com/watch?v=bWnxTIT0vd8
 
 `/_history[PAGE_RE].json` shows the detailed info of all the history versions of `[PAGE_RE]` (including subject, which is `[PAGE_RE]`, content, and the time it was created) in a json file if `[PAGE_RE]` already exists; if `[PAGE_RE]` does not exist, just return an empty json. (`[PAGE_RE]` is the name of the subject page.)
 
+`/_map` and `/_history[PAGE_RE]` are cached using `Memcached` (if a page already exists). In other words, every time you reload the page, a message `"queried ([0-9]+) second/seconds ago"` will show up on the bottom right corner, which tells you the age of the query that generated this page. 
+
+`/_flush` will delete all the cache and then redirect to the mainpage `/`.
 
 
 ## Tools used:
