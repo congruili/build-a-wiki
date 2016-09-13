@@ -237,9 +237,13 @@ class Login(WikiHandler):
             msg = 'Invalid login'
             self.render('login-form.html', error = msg)
 
+
 class Logout(WikiHandler):
     def get(self):
+        next_url = self.next_url()
         self.logout()
+        self.redirect(next_url)
+
 
 class NoSlash(WikiHandler):
     def get(self, path):
