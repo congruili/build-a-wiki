@@ -59,6 +59,9 @@ class WikiHandler(webapp2.RequestHandler):
         cookie_val = self.request.cookies.get(name)
         return cookie_val and check_secure_val(cookie_val)
 
+    def next_url(self):
+        return self.request.headers.get('referer', '/')
+
     def login(self, user):
         self.set_secure_cookie('user_id', str(user.key().id()))
 
@@ -164,17 +167,24 @@ def valid_email(email):
 
 class Signup(WikiHandler):
     def get(self):
-        self.render("signup-form.html")
+        next_url = self.next_url()
+        self.render("signup-form.html", next_url = next_url)
 
     def post(self):
         have_error = False
+
+        next_url = str(self.request.get('next_url'))
+        if not next_url or next_url.startswith('/login'):
+            next_url = '/'
+
         self.username = self.request.get('username')
         self.password = self.request.get('password')
         self.verify = self.request.get('verify')
         self.email = self.request.get('email')
 
         params = dict(username = self.username,
-                      email = self.email)
+                      email = self.email,
+                      next_url = next_url)
 
         if not valid_username(self.username):
             params['error_username'] = "That's not a valid username."
@@ -197,27 +207,32 @@ class Signup(WikiHandler):
             u = User.by_name(self.username)
             if u:
                 msg = 'That user already exists.'
-                self.render('signup-form.html', error_username = msg)
+                self.render('signup-form.html', error_username = msg, next_url=next_url)
             else:
                 u = User.register(self.username, self.password, self.email)
                 u.put()
 
                 self.login(u)
-                self.redirect('/')
+                self.redirect(next_url)
 
 
 class Login(WikiHandler):
     def get(self):
-        self.render('login-form.html')
+        next_url = self.next_url()
+        self.render('login-form.html', next_url = next_url)
 
     def post(self):
         username = self.request.get('username')
         password = self.request.get('password')
 
+        next_url = str(self.request.get('next_url'))
+        if not next_url or next_url.startswith('/login'):
+            next_url = '/'       
+
         u = User.login(username, password)
         if u:
             self.login(u)
-            self.redirect('/')
+            self.redirect(next_url)
         else:
             msg = 'Invalid login'
             self.render('login-form.html', error = msg)
@@ -225,13 +240,11 @@ class Login(WikiHandler):
 class Logout(WikiHandler):
     def get(self):
         self.logout()
-        self.redirect('/')
 
 class NoSlash(WikiHandler):
     def get(self, path):
         new_path = path.rstrip('/') or '/'
         self.redirect(new_path)
-
 
 
 class EditPage(WikiHandler):
